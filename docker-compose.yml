@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  # Orchestrateur DataOps pour le Sprint 1 (dlt -> DuckDB)
+  dagster:
+    image: python:3.10-slim
+    container_name: dagster_orchestrator
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    command: sh -c "pip install dagster dagster-webserver dlt duckdb && dagster-webserver -h 0.0.0.0 -p 3000"
