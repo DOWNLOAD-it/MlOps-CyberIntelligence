@@ -1,4 +1,4 @@
-First commit# Cybersecurity Threat Detection MLOps Platform
+Cybersecurity Threat Detection MLOps Platform
 
 An end-to-end Machine Learning Operations (MLOps) platform designed for real-time cybersecurity log analysis, threat classification, continuous integration, and automated model monitoring.
 
