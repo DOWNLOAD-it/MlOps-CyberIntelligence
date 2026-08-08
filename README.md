@@ -22,6 +22,17 @@ This platform ingests distributed network and log telemetry, transforms real-tim
 | **API & Serving** | FastAPI, Uvicorn |
 | **Monitoring & Visualization** | Prometheus, Grafana, ELK Stack (Elasticsearch, Logstash, Kibana) |
 
+## 💾 Data Setup
+
+To easily fetch the raw dataset (CICIDS2017) directly from Google Drive into your local workspace, run the included download script:
+
+```bash
+pip install -r requirements.txt
+python src/ingestion/download_data.py
+```
+
+This will automatically pull all required CSV files into the `data/raw/` directory, which is ignored by Git, ensuring you don't accidentally commit large datasets.
+
 ## 📂 Project Structure
 
 ```bash
