@@ -1,13 +1,87 @@
 version: '3.8'
 
 services:
-  # Orchestrateur DataOps pour le Sprint 1 (dlt -> DuckDB)
   dagster:
-    image: python:3.10-slim
+    build:
+      context: .
+      dockerfile: src/Dockerfile
     container_name: dagster_orchestrator
     working_dir: /app
     ports:
       - "3000:3000"
     volumes:
       - .:/app
-    command: sh -c "pip install dagster dagster-webserver dlt duckdb && dagster-webserver -h 0.0.0.0 -p 3000"
+      - dagster_home:/app/dagster_home
+    depends_on:
+      - redpanda
+    environment:
+      - PYTHONPATH=/app
+      - DAGSTER_HOME=/app/dagster_home
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      - KAFKA_RAW_TOPIC=raw-logs
+      - KAFKA_CLEANED_TOPIC=cleaned-logs
+      - KAFKA_ALERT_TOPIC=app-errors
+    command: sh -c 'until python -c "import socket,sys; s=socket.socket(); s.settimeout(1); rc=s.connect_ex((\"redpanda\",9092)); s.close(); sys.exit(0 if rc==0 else 1)" >/dev/null 2>&1; do echo "waiting for redpanda"; sleep 1; done; dagster-webserver -h 0.0.0.0 -p 3000'
+
+  dagster-daemon:
+    build:
+      context: .
+      dockerfile: src/Dockerfile
+    container_name: dagster_daemon
+    working_dir: /app
+    volumes:
+      - .:/app
+      - dagster_home:/app/dagster_home
+    depends_on:
+      - dagster
+    environment:
+      - PYTHONPATH=/app
+      - DAGSTER_HOME=/app/dagster_home
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      - KAFKA_RAW_TOPIC=raw-logs
+      - KAFKA_CLEANED_TOPIC=cleaned-logs
+      - KAFKA_ALERT_TOPIC=app-errors
+    command: sh -c 'until python -c "import socket,sys; s=socket.socket(); s.settimeout(1); rc=s.connect_ex((\"redpanda\",9092)); s.close(); sys.exit(0 if rc==0 else 1)" >/dev/null 2>&1; do sleep 1; done; dagster-daemon run'
+
+  dbt:
+    build:
+      context: .
+      dockerfile: src/Dockerfile
+    container_name: dbt_runner
+    working_dir: /app/dbt_project
+    volumes:
+      - .:/app
+    depends_on:
+      - dagster
+    command: sh -c "dbt run --profiles-dir /app/dbt_project"
+
+  redpanda:
+    image: redpandadata/redpanda
+
+    container_name: redpanda
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --memory=1G
+      - --reserve-memory=0M
+      - --smp
+      - "1"
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:9092
+    ports:
+      - "9092:9092"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:9644/v1/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  redpanda_data:
+  dagster_home:

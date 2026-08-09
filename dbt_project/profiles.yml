@@ -1,0 +1,8 @@
+mlsecops:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: /app/dbt_project/target/duck.db
+      threads: 1
+      keep_temp_files: false

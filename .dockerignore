@@ -1,0 +1,24 @@
+# Ignore editor and environment artifacts
+.git
+.vscode
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+
+# Ignore temporary Dagster home directories
+.tmp_dagster_home*
+
+# Ignore Docker artifacts and build caches
+docker-compose.override.yml
+*.log
+
+# Ignore dbt build output
+dbt_project/target
+dbt_project/dbt_modules
+
+# Ignore system files
+.DS_Store
