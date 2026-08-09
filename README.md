@@ -1,59 +1,145 @@
 Cybersecurity Threat Detection MLOps Platform
 
-An end-to-end Machine Learning Operations (MLOps) platform designed for real-time cybersecurity log analysis, threat classification, continuous integration, and automated model monitoring.
+An end-to-end Machine Learning Operations (MLOps) platform for real-time cybersecurity log processing, data transformation, and alerting. The repository uses Dagster for orchestration, Redpanda for Kafka streaming, and dbt with DuckDB for batch transformation.
 
-This platform ingests distributed network and log telemetry, transforms real-time data streams, and runs machine learning inference to flag security anomalies. It incorporates modern MLOps practices, including artifact versioning, automated testing, containerized deployment, and drift monitoring.
+This platform is built to:
+- ingest raw network logs from `data/raw/`
+- stream events into Kafka topics `raw-logs`, `cleaned-logs`, and `app-errors`
+- apply cleaning and simple ML inference in a Dagster asset pipeline
+- materialize output data and save inspection exports under `data/exports/`
+- run dbt models against DuckDB at `dbt_project/target/duck.db`
 
-## 🚀 Key Capabilities
+## 🚀 What the pipeline does
 
-- **Streaming Ingestion & Feature Engineering**: Continuous handling of log data with real-time vector transformation using Apache Kafka and Spark.
-- **Automated MLOps Pipeline**: Seamless experiment tracking, reproducible model training, and version control for datasets and artifacts via MLflow and DVC.
-- **Containerized Microservices**: Isolated, scalable services for data processing, model serving, and monitoring endpoints using Docker.
-- **Continuous Monitoring**: Real-time collection of metrics for data drift, system health, and model performance using Prometheus and Grafana.
-- **CI/CD Integration**: Automated testing and deployment pipelines powered by GitHub Actions.
+1. `src/streaming/producer.py` reads CSV files from `data/raw/` and publishes records to Redpanda topic `raw-logs`.
+2. `src/streaming/cleaner.py` consumes `raw-logs`, cleans records, republishes them to `cleaned-logs`, and writes `data/exports/cleaned_logs.jsonl`.
+3. `src/streaming/inference.py` consumes `cleaned-logs`, runs simple anomaly inference, publishes alerts to `app-errors`, and writes `data/exports/app_errors.jsonl`.
+4. `dbt` runs SQL models from `dbt_project/models/` against DuckDB and stores results in `dbt_project/target/duck.db`.
+5. `src/orchestration/assets.py` defines Dagster assets that orchestrate producer, cleaner, and inference steps.
 
-## 🛠 Technology Stack
+## 🔧 Services and how to run them
 
-| Category | Technologies |
-| :--- | :--- |
-| **Infrastructure & CI/CD** | Docker, Docker Compose, GitHub Actions |
-| **Data & Stream Processing** | Apache Kafka, Apache Spark, Python |
-| **Machine Learning & MLOps** | Scikit-Learn / PyTorch, MLflow, DVC |
-| **API & Serving** | FastAPI, Uvicorn |
-| **Monitoring & Visualization** | Prometheus, Grafana, ELK Stack (Elasticsearch, Logstash, Kibana) |
-
-## 💾 Data Setup
-
-To easily fetch the raw dataset (CICIDS2017) directly from Google Drive into your local workspace, run the included download script:
+### Start Redpanda
 
 ```bash
-pip install -r requirements.txt
-python src/ingestion/download_data.py
+cd /home/houssame/my_project/MLSecOps-Platform
+docker compose up --build redpanda
 ```
 
-This will automatically pull all required CSV files into the `data/raw/` directory, which is ignored by Git, ensuring you don't accidentally commit large datasets.
+Redpanda provides Kafka brokers on `localhost:9092` and the broker is used by the streaming assets.
 
-## 📂 Project Structure
+### Start Dagster UI and daemon
+
+```bash
+docker compose up --build dagster dagster-daemon
+```
+
+- `dagster` exposes the UI at `http://localhost:3000`
+- `dagster-daemon` runs sensors and schedules
+- Both containers share `PYTHONPATH=/app` and `DAGSTER_HOME=/app/dagster_home`
+
+### Run dbt
+
+```bash
+docker compose run --rm dbt
+```
+
+This executes `dbt run --profiles-dir /app/dbt_project` inside the `dbt` service. The DuckDB database file is written to:
+
+```bash
+dbt_project/target/duck.db
+```
+
+### Run the full stack
+
+```bash
+docker compose up --build
+```
+
+This will start Redpanda, Dagster, Dagster daemon, and dbt together. If you want manual control, start Redpanda first and then the Dagster services.
+
+## 📁 Where processed data is stored
+
+- Raw source CSV files: `data/raw/`
+- Cleaned streaming export: `data/exports/cleaned_logs.jsonl`
+- Anomaly alert export: `data/exports/app_errors.jsonl`
+- dbt DuckDB target: `dbt_project/target/duck.db`
+
+## 🧪 Manual test commands
+
+### Ingest raw CSV files manually
+
+```bash
+docker compose exec dagster python src/streaming/producer.py
+```
+
+### Run the cleaner manually
+
+```bash
+docker compose exec dagster python src/streaming/cleaner.py
+```
+
+### Run inference manually
+
+```bash
+docker compose exec dagster python src/streaming/inference.py
+```
+
+### Run dbt tests
+
+```bash
+docker compose exec dbt bash -c "cd /app/dbt_project && dbt test --profiles-dir /app/dbt_project"
+```
+
+### Inspect exported data files
+
+```bash
+ls -la data/exports
+head -n 5 data/exports/cleaned_logs.jsonl
+head -n 5 data/exports/app_errors.jsonl
+```
+
+## 🔗 Integrating with test and data-quality tools
+
+This repository is designed for easy integration with tools like:
+
+- **dbt tests**: add schema tests and data tests in `dbt_project/models/` and run `dbt test`
+- **Great Expectations**: add expectation suites for `data/raw/` and `data/exports/`
+- **kafka-console-consumer / rpk / kcat**: inspect Kafka topics directly
+- **Prometheus / Grafana**: instrument Dagster and streaming services for metrics
+- **MLflow**: track model versions and performance metrics if you add a model logging layer
+
+### Example data-quality workflow
+
+1. run ingestion and cleaning
+2. validate `data/exports/cleaned_logs.jsonl` with a Great Expectations suite
+3. run `dbt test` for schema and freshness checks
+4. monitor anomalies in `data/exports/app_errors.jsonl`
+
+## 🧩 Notes
+
+- `data/raw/` is the source ingestion folder. Add new CSV files there for the streaming sensor.
+- `data/exports/` is now used to capture the latest cleaned and anomaly output.
+- The pipeline is currently focused on stream simulation and simple rule-based/anomaly inference.
+- For a production-ready deployment, add proper Kafka topic management, persistent storage, and a real ML model.
+
+## 📦 Project structure
 
 ```bash
 .
-├── .github/
-│   └── workflows/          # CI/CD pipelines (testing, building, deployment)
 ├── data/
-│   └── raw/                # Raw log samples (for development)
-├── docker/
-│   ├── kafka/              # Kafka configuration
-│   ├── spark/              # Spark worker configurations
-│   └── elasticsearch/      # ELK stack configs
-├── ml/
-│   ├── training/           # Model training scripts (PyTorch/Scikit-Learn)
-│   ├── inference/          # Real-time inference logic
-│   └── utils/              # Feature engineering helpers
-├── services/
-│   ├── ingestion/          # Kafka producer/consumer logic
-│   ├── api/                # FastAPI serving endpoint
-│   └── monitor/            # Drift detection and health checks
-├── tests/                  # Unit and integration tests
-├── docker-compose.yml      # Orchestration of all services
-├── requirements.txt        # Python dependencies
+│   ├── exports/             # Processed streaming exports (cleaned, anomalies)
+│   └── raw/                 # Raw input CSV files
+├── dbt_project/
+│   ├── models/              # dbt SQL models
+│   ├── target/              # DuckDB artifacts and compiled outputs
+│   └── profiles.yml         # dbt DuckDB profile
+├── src/
+│   ├── ingestion/           # Dataset download and ingestion helpers
+│   ├── orchestration/       # Dagster assets and definitions
+│   ├── streaming/           # Kafka producer/consumer processing logic
+│   └── README.md            # Local developer notes
+├── docker-compose.yml       # Service orchestration
+├── requirements.txt         # Python dependencies
 └── README.md
+```
