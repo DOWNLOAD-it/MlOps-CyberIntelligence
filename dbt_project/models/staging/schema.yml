@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: stg_network_logs
+    description: >
+      Staging model for CICIDS2017 network traffic logs.
+      Provides cleaned and typed columns from raw ingested data.
+    columns:
+      - name: id
+        description: Unique identifier for the network log record.
+        tests:
+          - unique
+          - not_null
+
+      - name: event_name
+        description: Name of the network event.
+        tests:
+          - not_null
+
+      - name: event_time
+        description: Timestamp of the event occurrence.
+        tests:
+          - not_null
+
+      - name: source_ip
+        description: Source IP address of the network flow.
+        tests:
+          - not_null
+
+      - name: destination_ip
+        description: Destination IP address of the network flow.
+        tests:
+          - not_null
+
+      - name: destination_port
+        description: Destination port number (0-65535).
+        tests:
+          - not_null
+
+      - name: is_attack
+        description: Binary indicator — 0 for benign, 1 for attack.
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
