@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from dagster import asset, AssetExecutionContext
 from src.streaming.producer import run_producer, get_project_root
 from src.streaming.cleaner import run_cleaner
@@ -12,6 +13,30 @@ import json
 import os
 import glob
 import pandas as pd
+=======
+import os
+
+from dagster import asset, AssetExecutionContext, MetadataValue
+
+from src.streaming.producer import run_producer
+from src.streaming.cleaner import run_cleaner
+from src.streaming.inference import run_inference
+
+
+def _target_records() -> int:
+    """Objectif de volume par micro-batch (surchargeable via STREAM_MAX_RECORDS)."""
+    return int(os.getenv("STREAM_MAX_RECORDS", "120000"))
+
+
+def _read_batch_size() -> int:
+    return int(os.getenv("PRODUCER_BATCH_SIZE", "5000"))
+
+
+def _chunk_stride() -> int:
+    """1 = flux séquentiel; >1 = échantillon étalé sur toute la journée (plus d'attaques)."""
+    return max(1, int(os.getenv("PRODUCER_CHUNK_STRIDE", "1")))
+
+>>>>>>> 6c556c4 (Initial commit)
 
 @asset(
     group_name="streaming_pipeline",
@@ -19,6 +44,7 @@ import pandas as pd
     description="Simule le flux réseau en temps réel en envoyant les CSV locaux vers Redpanda (raw-logs)."
 )
 def streaming_ingestion_asset(context: AssetExecutionContext):
+<<<<<<< HEAD
     context.log.info("Lancement de l'ingestion temps réel vers Kafka/Redpanda...")
 
     # ── DATA QUALITY GATE: Validate raw CSV files before ingestion ──
@@ -48,6 +74,25 @@ def streaming_ingestion_asset(context: AssetExecutionContext):
     context.log.info("materialization", extra={"events_published": events_published})
     return events_published
 
+=======
+    target = _target_records()
+    context.log.info(f"Lancement de l'ingestion temps réel vers Kafka/Redpanda (objectif {target} événements)...")
+    events_published = run_producer(
+        batch_size=_read_batch_size(),
+        max_records=target,
+        chunk_stride=_chunk_stride(),
+    )
+    context.log.info(f"{events_published} événements poussés dans le flux brut.")
+    context.add_output_metadata(
+        {
+            "events_published": MetadataValue.int(events_published),
+            "target_records": MetadataValue.int(target),
+        }
+    )
+    return events_published
+
+
+>>>>>>> 6c556c4 (Initial commit)
 @asset(
     deps=[streaming_ingestion_asset],
     group_name="streaming_pipeline",
@@ -55,6 +100,7 @@ def streaming_ingestion_asset(context: AssetExecutionContext):
     description="Consomme le flux brut, le nettoie et le publie sur cleaned-logs."
 )
 def streaming_cleaning_asset(context: AssetExecutionContext):
+<<<<<<< HEAD
     context.log.info("Lancement du processeur de nettoyage de flux...")
     cleaned = run_cleaner(max_messages=1500)
     context.log.info(f"{cleaned} événements nettoyés et publiés.")
@@ -84,6 +130,21 @@ def streaming_cleaning_asset(context: AssetExecutionContext):
     context.log.info("materialization", extra={"events_cleaned": cleaned})
     return cleaned
 
+=======
+    target = _target_records()
+    context.log.info(f"Lancement du processeur de nettoyage de flux (objectif {target} événements)...")
+    cleaned = run_cleaner(max_messages=target)
+    context.log.info(f"{cleaned} événements nettoyés et publiés.")
+    context.add_output_metadata(
+        {
+            "events_cleaned": MetadataValue.int(cleaned),
+            "export_path": MetadataValue.path("data/exports/cleaned_logs.jsonl"),
+        }
+    )
+    return cleaned
+
+
+>>>>>>> 6c556c4 (Initial commit)
 @asset(
     deps=[streaming_cleaning_asset],
     group_name="streaming_pipeline",
@@ -91,6 +152,7 @@ def streaming_cleaning_asset(context: AssetExecutionContext):
     description="Applique le modèle d'IA en temps réel et alerte sur le topic app-errors."
 )
 def model_inference_asset(context: AssetExecutionContext):
+<<<<<<< HEAD
     context.log.info("Lancement de l'inférence du Modèle ML sur le flux propre...")
     anomalies = run_inference(max_messages=1500)
     context.log.info(f"{anomalies} cyber-attaques détectées et envoyées au système d'alerte.")
@@ -117,4 +179,16 @@ def model_inference_asset(context: AssetExecutionContext):
             raise
 
     context.log.info("materialization", extra={"anomalies_detected": anomalies})
+=======
+    target = _target_records()
+    context.log.info(f"Lancement de l'inférence du Modèle ML sur le flux propre (objectif {target})...")
+    anomalies = run_inference(max_messages=target)
+    context.log.info(f"{anomalies} cyber-attaques détectées et envoyées au système d'alerte.")
+    context.add_output_metadata(
+        {
+            "anomalies_detected": MetadataValue.int(anomalies),
+            "export_path": MetadataValue.path("data/exports/app_errors.jsonl"),
+        }
+    )
+>>>>>>> 6c556c4 (Initial commit)
     return anomalies
