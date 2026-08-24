@@ -21,6 +21,19 @@ services:
       - KAFKA_RAW_TOPIC=raw-logs
       - KAFKA_CLEANED_TOPIC=cleaned-logs
       - KAFKA_ALERT_TOPIC=app-errors
+<<<<<<< HEAD
+=======
+      # --- Volumétrie : 0 = illimité (on exporte TOUT le dataset brut ~2.83M lignes) ---
+      - STREAM_MAX_RECORDS=0
+      - PRODUCER_BATCH_SIZE=5000
+      - PRODUCER_CHUNK_STRIDE=1
+      - CSV_ENCODING=cp1252
+      - KAFKA_MAX_POLL_RECORDS=5000
+      - KAFKA_POLL_TIMEOUT_MS=5000
+      - KAFKA_IDLE_POLLS_LIMIT=5
+      - KAFKA_IDLE_TIMEOUT_S=120
+      - EXPORT_APPEND=false
+>>>>>>> 6c556c4 (Initial commit)
     command: sh -c 'until python -c "import socket,sys; s=socket.socket(); s.settimeout(1); rc=s.connect_ex((\"redpanda\",9092)); s.close(); sys.exit(0 if rc==0 else 1)" >/dev/null 2>&1; do echo "waiting for redpanda"; sleep 1; done; dagster-webserver -h 0.0.0.0 -p 3000'
 
   dagster-daemon:
@@ -41,6 +54,19 @@ services:
       - KAFKA_RAW_TOPIC=raw-logs
       - KAFKA_CLEANED_TOPIC=cleaned-logs
       - KAFKA_ALERT_TOPIC=app-errors
+<<<<<<< HEAD
+=======
+      # --- Volumétrie : 0 = illimité (on exporte TOUT le dataset brut ~2.83M lignes) ---
+      - STREAM_MAX_RECORDS=0
+      - PRODUCER_BATCH_SIZE=5000
+      - PRODUCER_CHUNK_STRIDE=1
+      - CSV_ENCODING=cp1252
+      - KAFKA_MAX_POLL_RECORDS=5000
+      - KAFKA_POLL_TIMEOUT_MS=5000
+      - KAFKA_IDLE_POLLS_LIMIT=5
+      - KAFKA_IDLE_TIMEOUT_S=120
+      - EXPORT_APPEND=false
+>>>>>>> 6c556c4 (Initial commit)
     command: sh -c 'until python -c "import socket,sys; s=socket.socket(); s.settimeout(1); rc=s.connect_ex((\"redpanda\",9092)); s.close(); sys.exit(0 if rc==0 else 1)" >/dev/null 2>&1; do sleep 1; done; dagster-daemon run'
 
   dbt:

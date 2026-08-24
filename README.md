@@ -16,7 +16,10 @@ This platform is built to:
 3. `src/streaming/inference.py` consumes `cleaned-logs`, runs simple anomaly inference, publishes alerts to `app-errors`, and writes `data/exports/app_errors.jsonl`.
 4. `dbt` runs SQL models from `dbt_project/models/` against DuckDB and stores results in `dbt_project/target/duck.db`.
 5. `src/orchestration/assets.py` defines Dagster assets that orchestrate producer, cleaner, and inference steps.
+<<<<<<< HEAD
 6. `src/quality/data_quality.py` valide la qualité des données à chaque étape du pipeline (complétude, validité, intégrité).
+=======
+>>>>>>> 6c556c4 (Initial commit)
 
 ## 🔧 Services and how to run them
 
@@ -100,6 +103,7 @@ head -n 5 data/exports/cleaned_logs.jsonl
 head -n 5 data/exports/app_errors.jsonl
 ```
 
+<<<<<<< HEAD
 ## 🛡️ Qualité des données (Data Quality)
 
 Le module `src/quality/data_quality.py` implémente des règles de qualité des données qui s'exécutent automatiquement à chaque étape du pipeline. En cas d'échec, le pipeline **s'arrête immédiatement** (hard gate), comme dans un environnement de production.
@@ -221,6 +225,24 @@ Ce dépôt est conçu pour une intégration facile avec :
 6. Inférence ML et détection d'anomalies
 7. **Porte 3** : validation de la sortie d'inférence
 8. En cas d'échec à n'importe quelle porte → le pipeline s'arrête avec un rapport détaillé
+=======
+## 🔗 Integrating with test and data-quality tools
+
+This repository is designed for easy integration with tools like:
+
+- **dbt tests**: add schema tests and data tests in `dbt_project/models/` and run `dbt test`
+- **Great Expectations**: add expectation suites for `data/raw/` and `data/exports/`
+- **kafka-console-consumer / rpk / kcat**: inspect Kafka topics directly
+- **Prometheus / Grafana**: instrument Dagster and streaming services for metrics
+- **MLflow**: track model versions and performance metrics if you add a model logging layer
+
+### Example data-quality workflow
+
+1. run ingestion and cleaning
+2. validate `data/exports/cleaned_logs.jsonl` with a Great Expectations suite
+3. run `dbt test` for schema and freshness checks
+4. monitor anomalies in `data/exports/app_errors.jsonl`
+>>>>>>> 6c556c4 (Initial commit)
 
 ## 🧩 Notes
 
@@ -229,11 +251,16 @@ Ce dépôt est conçu pour une intégration facile avec :
 - The pipeline is currently focused on stream simulation and simple rule-based/anomaly inference.
 - For a production-ready deployment, add proper Kafka topic management, persistent storage, and a real ML model.
 
+<<<<<<< HEAD
 ## 📦 Structure du projet
+=======
+## 📦 Project structure
+>>>>>>> 6c556c4 (Initial commit)
 
 ```bash
 .
 ├── data/
+<<<<<<< HEAD
 │   ├── exports/             # Exports du streaming (données nettoyées, anomalies)
 │   └── raw/                 # Fichiers CSV bruts (CICIDS2017)
 ├── dbt_project/
@@ -258,5 +285,20 @@ Ce dépôt est conçu pour une intégration facile avec :
 │   └── test_data_quality.py # 29 tests unitaires de qualité des données
 ├── docker-compose.yml       # Orchestration des services
 ├── requirements.txt         # Dépendances Python
+=======
+│   ├── exports/             # Processed streaming exports (cleaned, anomalies)
+│   └── raw/                 # Raw input CSV files
+├── dbt_project/
+│   ├── models/              # dbt SQL models
+│   ├── target/              # DuckDB artifacts and compiled outputs
+│   └── profiles.yml         # dbt DuckDB profile
+├── src/
+│   ├── ingestion/           # Dataset download and ingestion helpers
+│   ├── orchestration/       # Dagster assets and definitions
+│   ├── streaming/           # Kafka producer/consumer processing logic
+│   └── README.md            # Local developer notes
+├── docker-compose.yml       # Service orchestration
+├── requirements.txt         # Python dependencies
+>>>>>>> 6c556c4 (Initial commit)
 └── README.md
 ```
