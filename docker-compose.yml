@@ -7,7 +7,7 @@ services:
       dockerfile: src/Dockerfile
     container_name: dagster_orchestrator
     ports:
-      - "3000:3000"
+      - "${DAGSTER_HOST_PORT:-3000}:3000"
     volumes:
       - .:/app
       - dagster_home:/app/dagster_home
@@ -84,15 +84,15 @@ services:
       - --reserve-memory 0M
       - --overprovisioned
       - --node-id 0
-      - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
-      - --advertise-kafka-addr PLAINTEXT://redpanda:29092,OUTSIDE://redpanda:9092
-      - --pandaproxy-addr 0.0.0.0:8082
-      - --advertise-pandaproxy-addr redpanda:8082
+      - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:${REDPANDA_KAFKA_PORT:-9092}
+      - --advertise-kafka-addr PLAINTEXT://redpanda:29092,OUTSIDE://${REDPANDA_ADVERTISE_HOST:-redpanda}:${REDPANDA_KAFKA_PORT:-9092}
+      - --pandaproxy-addr 0.0.0.0:${REDPANDA_PROXY_PORT:-8082}
+      - --advertise-pandaproxy-addr ${REDPANDA_ADVERTISE_HOST:-redpanda}:${REDPANDA_PROXY_PORT:-8082}
     ports:
-      - "8081:8081"
-      - "8082:8082"
-      - "9092:9092"
-      - "29092:29092"
+      - "${REDPANDA_ADMIN_PORT:-8081}:8081"
+      - "${REDPANDA_PROXY_PORT:-8082}:8082"
+      - "${REDPANDA_KAFKA_PORT:-9092}:9092"
+      - "${REDPANDA_INTERNAL_PORT:-29092}:29092"
     volumes:
       - redpanda_data:/var/lib/redpanda/data
 
@@ -103,7 +103,7 @@ services:
       dockerfile: src/Dockerfile
     container_name: mlflow_server
     ports:
-      - "5000:5000"
+      - "${MLFLOW_HOST_PORT:-5000}:5000"
     volumes:
       - .:/app
       - mlflow_data:/app/mlruns
