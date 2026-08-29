@@ -1,0 +1,16 @@
+name: Deploy to Komodo
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Komodo Deployment
+        run: |
+          echo "Triggering deployment on Komodo server..."
+          curl -X POST "${{ secrets.KOMODO_WEBHOOK_URL }}"
