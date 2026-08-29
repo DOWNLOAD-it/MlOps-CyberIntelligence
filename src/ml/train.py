@@ -224,8 +224,13 @@ def train_model(records: list, contamination: float = 0.1, n_estimators: int = 2
         
     return result
 
-def run_training(data_path: str = None, contamination: float = 0.1, n_estimators: int = 200) -> dict:
+def run_training(data_path: str = None, contamination: float = None, n_estimators: int = None) -> dict:
     """Orchestrator function to load data and train model."""
+    if contamination is None:
+        contamination = float(os.getenv("ML_CONTAMINATION", "0.1"))
+    if n_estimators is None:
+        n_estimators = int(os.getenv("ML_N_ESTIMATORS", "200"))
+        
     logger.info("Starting training pipeline...")
     records = load_training_data(data_path)
     return train_model(records, contamination=contamination, n_estimators=n_estimators)
