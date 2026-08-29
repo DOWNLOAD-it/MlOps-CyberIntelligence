@@ -45,7 +45,6 @@ Thumbs.db
 # ==========================================
 # Data, Datasets & Streaming Exports
 # ==========================================
-data/raw/
 data/processed/
 data/exports/
 *.csv
