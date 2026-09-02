@@ -1,4 +1,4 @@
-﻿"""Model training script for network anomaly detection.
+"""Model training script for network anomaly detection.
 
 Multi-model experiment pipeline for CICIDS2017 network traffic logs.
 Each candidate model gets its own MLflow child run so you can compare
@@ -23,7 +23,6 @@ import joblib
 
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, ExtraTreesClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_validate
 from sklearn.metrics import confusion_matrix as cm_fn
 
@@ -64,10 +63,6 @@ CANDIDATE_MODELS = [
     (
         "LogisticRegression",
         LogisticRegression(C=1.0, max_iter=1000, random_state=42, class_weight="balanced", n_jobs=-1),
-    ),
-    (
-        "SVC",
-        SVC(kernel="rbf", probability=True, random_state=42, class_weight="balanced"),
     ),
 ]
 
