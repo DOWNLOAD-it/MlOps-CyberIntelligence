@@ -1,8 +1,3 @@
-﻿# Ingestion Module
+# Data Ingestion
 
-Handles downloading and initially preparing raw CICIDS2017 network traffic data.
-
-## Key Files
-- **`download_data.py`**: Automates downloading raw datasets from external sources (e.g., Google Drive via `gdown`) into the `data/raw/` directory.
-
-The ingestion process is typically orchestrated as the first step in the Dagster pipeline.
+Handles the initial loading of the CICIDS2017 dataset and streaming logs. Interacts with the data warehouse and prepares data for dbt transformations.

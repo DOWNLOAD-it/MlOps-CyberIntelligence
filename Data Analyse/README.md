@@ -1,7 +1,3 @@
-﻿# Data Analysis
+# Data Analysis
 
-Exploratory Data Analysis (EDA) notebooks for the CICIDS2017 network traffic dataset.
-
-## Notebooks
-
-- **`Analyse_EDA_IDS.ipynb`**: Comprehensive EDA covering class distribution (benign vs. attack), feature correlation, and attack type breakdowns.
+Contains exploratory data analysis (EDA) notebooks, scripts, and visualizations used to understand the CICIDS2017 dataset, analyze feature importance, and guide the modeling strategy.
