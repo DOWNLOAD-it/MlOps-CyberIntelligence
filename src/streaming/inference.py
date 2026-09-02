@@ -1,13 +1,48 @@
-import os
+﻿import os
 import json
 import logging
 import random
 import time
+import psycopg2
+from datetime import datetime
 from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import KafkaError
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+def get_postgres_connection():
+    try:
+        conn = psycopg2.connect(
+            host=os.environ.get('POSTGRES_HOST', 'postgres'),
+            port=os.environ.get('POSTGRES_PORT', '5432'),
+            user=os.environ.get('POSTGRES_USER', 'mlsecops'),
+            password=os.environ.get('POSTGRES_PASSWORD', 'supersecret'),
+            database=os.environ.get('POSTGRES_DB', 'soc_alerts')
+        )
+        return conn
+    except Exception as e:
+        logger.error(f"Failed to connect to postgres: {e}")
+        return None
+
+def init_db(conn):
+    if not conn:
+        return
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS alerts (
+                    id SERIAL PRIMARY KEY,
+                    timestamp TIMESTAMP NOT NULL,
+                    attack_type VARCHAR(100),
+                    destination_port INT,
+                    flow_duration INT,
+                    confidence FLOAT
+                )
+            """)
+        conn.commit()
+    except Exception as e:
+        logger.error(f"Failed to init db: {e}")
 
 def get_kafka_clients():
     max_poll = int(os.environ.get('KAFKA_MAX_POLL_RECORDS', 500))
@@ -80,6 +115,8 @@ def run_inference(max_messages=None, idle_polls_limit=None):
         model = None
         
     consumer, producer = get_kafka_clients()
+    pg_conn = get_postgres_connection()
+    init_db(pg_conn)
     
     root_dir = get_project_root()
     export_dir = os.path.join(root_dir, 'data', 'processed')
@@ -127,6 +164,28 @@ def run_inference(max_messages=None, idle_polls_limit=None):
                         producer.send('alerts', data)
                         f.write(json.dumps(data) + '\n')
                         
+                        # Save anomaly to Postgres if confidence > 0.5
+                        if score > 0.5 and pg_conn:
+                            try:
+                                with pg_conn.cursor() as cur:
+                                    cur.execute(
+                                        """
+                                        INSERT INTO alerts (timestamp, attack_type, destination_port, flow_duration, confidence)
+                                        VALUES (%s, %s, %s, %s, %s)
+                                        """,
+                                        (
+                                            datetime.now(),
+                                            data.get('label', 'Anomaly'),
+                                            data.get('destination_port', 0),
+                                            data.get('flow_duration', 0),
+                                            score
+                                        )
+                                    )
+                                pg_conn.commit()
+                            except Exception as e:
+                                logger.error(f"Failed to insert alert into Postgres: {e}")
+                                pg_conn.rollback()
+                        
                         messages_processed += 1
                         
                 f.flush()
@@ -135,6 +194,8 @@ def run_inference(max_messages=None, idle_polls_limit=None):
     finally:
         consumer.close()
         producer.close()
+        if pg_conn:
+            pg_conn.close()
         logger.info("Inference closed.")
 
 if __name__ == '__main__':
