@@ -19,13 +19,14 @@ app.add_middleware(
 )
 
 model = None
+scaler = None
 
 @app.on_event("startup")
 def load_ml_model():
-    global model
+    global model, scaler
     try:
         from src.ml.predict import load_model
-        model = load_model()
+        model, scaler = load_model()
         logger.info("ML model loaded successfully.")
     except Exception as e:
         logger.error(f"Failed to load ML model: {e}")
@@ -35,16 +36,15 @@ def health_check():
     return {"status": "ok", "model_loaded": model is not None}
 
 @app.post("/api/v1/predict", response_model=PredictionResponse)
-def predict(record: NetworkRecord):
-    global model
+def predict_endpoint(record: NetworkRecord):
+    global model, scaler
     if model is None:
         raise HTTPException(status_code=503, detail="Model is not loaded")
     
     try:
-        from src.ml.predict import predict_record
+        from src.ml.predict import predict
         data_dict = record.dict()
-        score = predict_record(model, data_dict)
-        is_attack = score > 0.5
+        is_attack, score = predict(data_dict, model, scaler)
         return PredictionResponse(
             is_attack=is_attack,
             confidence=score,
@@ -56,17 +56,16 @@ def predict(record: NetworkRecord):
 
 @app.post("/api/v1/predict_batch", response_model=List[PredictionResponse])
 def predict_batch(records: List[NetworkRecord]):
-    global model
+    global model, scaler
     if model is None:
         raise HTTPException(status_code=503, detail="Model is not loaded")
         
     responses = []
-    from src.ml.predict import predict_record
+    from src.ml.predict import predict
     
     for record in records:
         try:
-            score = predict_record(model, record.dict())
-            is_attack = score > 0.5
+            is_attack, score = predict(record.dict(), model, scaler)
             responses.append(PredictionResponse(
                 is_attack=is_attack,
                 confidence=score,
