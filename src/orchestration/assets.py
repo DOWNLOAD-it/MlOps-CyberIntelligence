@@ -150,16 +150,16 @@ def model_training_asset(context: AssetExecutionContext):
         result = run_training(data_path=data_path)
         context.log.info(
             f"✅ Model training complete. "
-            f"Metrics: precision={result['metrics'].get('precision', 'N/A'):.4f}, "
-            f"recall={result['metrics'].get('recall', 'N/A'):.4f}, "
-            f"f1={result['metrics'].get('f1', 'N/A'):.4f}"
+            f"Metrics: precision={result['metrics'].get('test_precision', 0.0):.4f}, "
+            f"recall={result['metrics'].get('test_recall', 0.0):.4f}, "
+            f"f1={result['metrics'].get('test_f1', 0.0):.4f}"
         )
         context.add_output_metadata(
             {
                 "mlflow_run_id": MetadataValue.text(result.get("run_id", "N/A")),
-                "precision": MetadataValue.float(result["metrics"].get("precision", 0.0)),
-                "recall": MetadataValue.float(result["metrics"].get("recall", 0.0)),
-                "f1_score": MetadataValue.float(result["metrics"].get("f1", 0.0)),
+                "precision": MetadataValue.float(result["metrics"].get("test_precision", 0.0)),
+                "recall": MetadataValue.float(result["metrics"].get("test_recall", 0.0)),
+                "f1_score": MetadataValue.float(result["metrics"].get("test_f1", 0.0)),
                 "model_version": MetadataValue.text(result.get("model_version", "N/A")),
             }
         )
