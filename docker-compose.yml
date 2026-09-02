@@ -111,7 +111,67 @@ services:
       - PYTHONPATH=/app
     command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000", "--backend-store-uri", "sqlite:///app/mlflow.db", "--default-artifact-root", "/app/mlruns", "--allowed-hosts", "*"]
 
+  postgres:
+    image: postgres:15-alpine
+    container_name: soc_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mlsecops}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-supersecret}
+      POSTGRES_DB: ${POSTGRES_DB:-soc_alerts}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  grafana:
+    image: grafana/grafana:10.1.5
+    container_name: soc_grafana
+    ports:
+      - "${GRAFANA_HOST_PORT:-4307}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - postgres
+
+  ml_api:
+    build:
+      context: .
+      dockerfile: app/Dockerfile.api
+    container_name: mlsecops_api
+    ports:
+      - "${API_HOST_PORT:-4308}:8000"
+    volumes:
+      - ./app/api:/app/app/api
+      - ./src:/app/src
+      - ./data:/app/data
+      - mlflow_data:/app/mlruns
+    environment:
+      - PYTHONPATH=/app
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    depends_on:
+      - mlflow
+
+  ml_webapp:
+    build:
+      context: ./app/webapp
+      dockerfile: ../Dockerfile.webapp
+    container_name: mlsecops_webapp
+    ports:
+      - "${WEBAPP_HOST_PORT:-4309}:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:${API_HOST_PORT:-4308}
+    depends_on:
+      - ml_api
+
 volumes:
   redpanda_data:
   dagster_home:
   mlflow_data:
+  postgres_data:
+  grafana_data:

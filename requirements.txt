@@ -29,3 +29,6 @@ gdown
 # Testing & Quality
 pytest>=7.4.0
 pre-commit>=3.5.0
+
+# Database
+psycopg2-binary>=2.9.9

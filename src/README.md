@@ -1,17 +1,10 @@
-﻿# Source Modules (`src/`)
+# Source Code (src)
 
-This directory contains the core logic for data orchestration, streaming, data quality, and machine learning.
+This directory contains the core Python modules for the **MlOps-CyberIntelligence** pipeline.
 
-## Modules
-
-- **`ingestion/`**: Scripts for downloading and preparing raw datasets (e.g., fetching CICIDS2017 from Google Drive).
-- **`orchestration/`**: Dagster definitions, assets, sensors, and schedules for automating the pipeline.
-- **`streaming/`**: Redpanda/Kafka integration. Includes producers to stream CSV data, cleaners for real-time data normalization, and inference scripts to detect anomalies.
-- **`quality/`**: Data quality gates to ensure data integrity before and after processing.
-- **`ml/`**: The complete machine learning pipeline, featuring a multi-model evaluation framework, feature extraction, and MLflow logging.
-
-## Technology Stack
-- **Dagster**: Orchestration
-- **Redpanda**: Streaming (Kafka-compatible)
-- **Scikit-Learn**: Machine Learning
-- **MLflow**: Experiment tracking and model registry
+Modules included:
+- `ingestion/`: Handles data extraction and loading.
+- `ml/`: Model training, evaluation, and logging.
+- `orchestration/`: Dagster definitions.
+- `quality/`: Data quality checks and validations.
+- `streaming/`: Real-time streaming integration with Redpanda and PostgreSQL.
