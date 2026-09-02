@@ -3,7 +3,7 @@ name: Deploy to Komodo
 on:
   push:
     branches:
-      - develop
+      - master
       - main
   workflow_dispatch:
 
