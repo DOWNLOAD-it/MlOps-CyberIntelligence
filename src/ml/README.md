@@ -1,28 +1,21 @@
-﻿# ML Module — Network Anomaly Detection
+﻿# Machine Learning Module
 
-Multi-model machine learning pipeline for detecting cyber-attacks in network traffic.
+Robust, multi-model machine learning pipeline for detecting cyber-attacks in network traffic (CICIDS2017).
 
-## Files
-| File | Description |
-|------|-------------|
-| 	rain.py | Multi-model training pipeline (5 candidates, CV selection, MLflow logging) |
-| evaluate.py | Evaluation report generation, overfitting detection, artifact saving |
-| eatures.py | Feature extraction and StandardScaler preprocessing |
-| predict.py | Inference on new streaming data using saved model |
+## Pipeline Workflow
+
+The `train.py` script executes the following:
+1. **Extraction**: Loads features and labels from `data/exports/cleaned_logs.jsonl`.
+2. **Strict Split**: Performs an 80/20 stratified train/test split.
+3. **Safe Scaling**: Fits a `StandardScaler` **only** on training data to prevent data leakage.
+4. **CV Selection**: Evaluates 5 candidate models (`RandomForest`, `ExtraTrees`, `GradientBoosting`, `LogisticRegression`, `SVC`) using 5-Fold Stratified CV on the training set.
+5. **Evaluation**: The best model (highest CV F1) is evaluated **exactly once** on the held-out test set.
+6. **Logging**: Results, test metrics, and artifacts are saved locally and logged to MLflow (each candidate as a child run).
 
 ## Anti-Leakage Guarantees
-- Train/test split done **before** any preprocessing
-- StandardScaler fitted on **training data only**
-- CV runs **entirely within the training fold**
-- Test set evaluated **exactly once** after model selection
-
-## Models Compared
-- RandomForest, ExtraTrees, GradientBoosting, LogisticRegression, SVC
+- Zero data leakage between train and test sets.
+- Cross-validation operates strictly within the training fold.
+- Evaluation on the test set occurs only once, after model selection is finalized.
 
 ## Artifacts
-Saved to rtifacts/ after training:
-- model.joblib — Best model
-- scaler.joblib — Fitted scaler
-- evaluation_report.txt — Full evaluation report
-- model_comparison.json — All CV scores
-- confusion_matrix.json — Test set confusion matrix
+Generated artifacts (models, scalers, reports) are stored in `src/ml/artifacts/` and logged to MLflow.

@@ -1,18 +1,19 @@
-﻿# Streaming Module — Redpanda / Kafka
+﻿# Streaming Module
 
-Handles real-time network traffic ingestion and inference via Redpanda (Kafka-compatible).
+Handles real-time network traffic ingestion and inference using **Redpanda** (Kafka-compatible broker).
 
 ## Key Files
+
 | File | Description |
 |------|-------------|
-| producer.py | Produces network flow records to Redpanda topics |
-| cleaner.py | Cleans and normalizes raw records from the stream |
-| inference.py | Consumes cleaned records and runs anomaly detection in real-time |
+| `producer.py` | Reads local CSV files and produces raw network flow records to a Kafka topic. |
+| `cleaner.py` | Consumes raw records, sanitizes/normalizes them, and produces them to a clean topic. |
+| `inference.py` | Consumes clean records, applies real-time anomaly detection, and produces alerts. |
 
 ## Topics
+
 | Topic | Purpose |
 |-------|---------|
-| 
-etwork-logs-raw | Raw incoming network flows |
-| 
-etwork-logs-clean | Cleaned, normalized flows ready for inference |
+| `network-logs-raw` | Raw incoming network flows from the producer. |
+| `network-logs-clean` | Cleaned, normalized flows ready for inference or storage. |
+| `app-errors` | Anomaly alerts detected by the inference model. |

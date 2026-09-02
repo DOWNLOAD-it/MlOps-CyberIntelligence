@@ -1,11 +1,8 @@
 ﻿# Ingestion Module
 
-Handles downloading and ingesting raw CICIDS2017 network traffic data.
+Handles downloading and initially preparing raw CICIDS2017 network traffic data.
 
 ## Key Files
-| File | Description |
-|------|-------------|
-| download_data.py | Downloads raw datasets from Google Drive using gdown |
+- **`download_data.py`**: Automates downloading raw datasets from external sources (e.g., Google Drive via `gdown`) into the `data/raw/` directory.
 
-## Usage
-The ingestion pipeline is triggered via the Dagster orchestrator.
+The ingestion process is typically orchestrated as the first step in the Dagster pipeline.

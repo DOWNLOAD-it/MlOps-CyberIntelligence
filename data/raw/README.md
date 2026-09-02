@@ -1,8 +1,7 @@
-﻿# Raw Data
+﻿# Raw Data (`data/raw/`)
 
-Contains raw CICIDS2017 network traffic CSV files.
+This directory is the landing zone for the raw CICIDS2017 network traffic CSV files.
 
 **Download Link:** [Google Drive Raw Datasets](https://drive.google.com/drive/folders/11Pv-TauVhMHxH5Th3SaKvvU9HLuYL1rC)
 
-> These files are large and excluded from git via .gitignore.
-> Download them manually and place them in this directory before running the pipeline.
+> **Note:** These files are extremely large and are excluded from version control via `.gitignore`. The `src/ingestion` scripts can be used to populate this folder.

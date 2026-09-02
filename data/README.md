@@ -1,15 +1,11 @@
-# Data Pipeline Execution Guide
+﻿# Data Directory
 
-## 1. Input Data Setup
-- **Raw Dataset Path:** `/data/raw`
-- **Download Link:** [Google Drive Raw Datasets](https://drive.google.com/drive/folders/11Pv-TauVhMHxH5Th3SaKvvU9HLuYL1rC)
+This directory holds all data used by the MLSecOps-Platform. We use the **CICIDS2017 Network Traffic Logs** dataset for intrusion detection.
 
-## 2. Pipeline Execution
-1. Spin up the docker containers for **Dagster** and **Redpanda**.
-2. Open the **Dagster UI**, navigate to configuration, and activate the required **sensor**.
-3. Trigger and run the target job(s).
+## Structure
 
-## 3. Expected Output
-Upon successful pipeline completion:
-- **Cleaned Data Directory:** `/data/exports/`
-- **File Format:** `.jsonl` (JSON Lines)
+- **`raw/`**: The original, unmodified CSV files downloaded from the source. (Git-ignored)
+- **`processed/`**: Intermediate files generated during pipeline execution. (Git-ignored)
+- **`exports/`**: Final, cleaned output files (like `.jsonl`) ready for ML training.
+
+**Dataset Download:** [Google Drive Raw Datasets](https://drive.google.com/drive/folders/11Pv-TauVhMHxH5Th3SaKvvU9HLuYL1rC)
