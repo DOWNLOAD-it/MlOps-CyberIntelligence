@@ -139,6 +139,36 @@ services:
     depends_on:
       - postgres
 
+  ml_api:
+    build:
+      context: .
+      dockerfile: app/Dockerfile.api
+    container_name: mlsecops_api
+    ports:
+      - "${API_HOST_PORT:-4308}:8000"
+    volumes:
+      - ./app/api:/app/app/api
+      - ./src:/app/src
+      - ./data:/app/data
+      - mlflow_data:/app/mlruns
+    environment:
+      - PYTHONPATH=/app
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    depends_on:
+      - mlflow
+
+  ml_webapp:
+    build:
+      context: ./app/webapp
+      dockerfile: ../Dockerfile.webapp
+    container_name: mlsecops_webapp
+    ports:
+      - "${WEBAPP_HOST_PORT:-4309}:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:${API_HOST_PORT:-4308}
+    depends_on:
+      - ml_api
+
 volumes:
   redpanda_data:
   dagster_home:
