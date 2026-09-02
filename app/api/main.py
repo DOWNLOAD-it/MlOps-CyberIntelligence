@@ -37,7 +37,6 @@ def health_check():
 
 @app.post("/api/v1/predict", response_model=PredictionResponse)
 def predict_endpoint(record: NetworkRecord):
-    global model, scaler
     if model is None:
         raise HTTPException(status_code=503, detail="Model is not loaded")
     
@@ -56,7 +55,6 @@ def predict_endpoint(record: NetworkRecord):
 
 @app.post("/api/v1/predict_batch", response_model=List[PredictionResponse])
 def predict_batch(records: List[NetworkRecord]):
-    global model, scaler
     if model is None:
         raise HTTPException(status_code=503, detail="Model is not loaded")
         
