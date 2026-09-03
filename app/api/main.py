@@ -21,29 +21,59 @@ app.add_middleware(
 model = None
 scaler = None
 
+def get_or_load_model():
+    global model, scaler
+    if model is None:
+        try:
+            from src.ml.predict import load_model
+            loaded_model, loaded_scaler = load_model()
+            if loaded_model is not None:
+                model, scaler = loaded_model, loaded_scaler
+                logger.info("ML model dynamically loaded successfully.")
+        except Exception as e:
+            logger.error(f"Error during dynamic model loading: {e}")
+    return model, scaler
+
 @app.on_event("startup")
 def load_ml_model():
     global model, scaler
     try:
         from src.ml.predict import load_model
         model, scaler = load_model()
-        logger.info("ML model loaded successfully.")
+        if model is not None:
+            logger.info("ML model loaded successfully.")
+        else:
+            logger.warning("ML model not found yet. It will load automatically once trained via Dagster.")
     except Exception as e:
-        logger.error(f"Failed to load ML model: {e}")
+        logger.error(f"Failed to load ML model on startup: {e}")
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "model_loaded": model is not None}
+    m, _ = get_or_load_model()
+    return {"status": "ok", "model_loaded": m is not None}
+
+@app.post("/api/v1/reload-model")
+def reload_model_endpoint():
+    global model, scaler
+    from src.ml.predict import load_model
+    model, scaler = load_model()
+    if model is None:
+        raise HTTPException(status_code=404, detail="Model artifacts not found yet. Run training in Dagster first.")
+    return {"status": "success", "message": "Model reloaded successfully."}
 
 @app.post("/api/v1/predict", response_model=PredictionResponse)
 def predict_endpoint(record: NetworkRecord):
-    if model is None:
-        raise HTTPException(status_code=503, detail="Model is not loaded")
+    m, s = get_or_load_model()
+    if m is None:
+        raise HTTPException(
+            status_code=503, 
+            detail="Model is not trained yet. Please launch the training pipeline in Dagster (http://komodo.s3.fsbm.ma:4301)."
+        )
     
     try:
         from src.ml.predict import predict
         data_dict = record.dict()
-        is_attack, score = predict(data_dict, model, scaler)
+        is_attack, score = predict(data_dict, m, s)
         return PredictionResponse(
             is_attack=is_attack,
             confidence=score,
@@ -55,8 +85,12 @@ def predict_endpoint(record: NetworkRecord):
 
 @app.post("/api/v1/predict_batch", response_model=List[PredictionResponse])
 def predict_batch(records: List[NetworkRecord]):
-    if model is None:
-        raise HTTPException(status_code=503, detail="Model is not loaded")
+    m, s = get_or_load_model()
+    if m is None:
+        raise HTTPException(
+            status_code=503, 
+            detail="Model is not trained yet. Please launch the training pipeline in Dagster (http://komodo.s3.fsbm.ma:4301)."
+        )
         
     responses = []
     from src.ml.predict import predict
