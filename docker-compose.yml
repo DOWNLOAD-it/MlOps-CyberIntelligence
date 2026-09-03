@@ -120,8 +120,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-soc_alerts}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
 
   grafana:
     image: grafana/grafana:10.1.5
