@@ -148,6 +148,11 @@ def model_training_asset(context: AssetExecutionContext):
             return {"status": "skipped", "reason": "no_training_data"}
 
         result = run_training(data_path=data_path)
+        
+        if not result or "metrics" not in result:
+            context.log.warning("Training returned no metrics. Likely no records available.")
+            return {"status": "skipped", "reason": "no_records_or_failed"}
+
         context.log.info(
             f"✅ Model training complete. "
             f"Metrics: precision={result['metrics'].get('test_precision', 0.0):.4f}, "
