@@ -44,15 +44,15 @@ Combines real-time streaming, automated ML training, and live SOC dashboards —
 
 | Service        | Internal Port | Host Port | URL (local / SSH tunnel)       |
 |----------------|:------------:|:---------:|--------------------------------|
-| Dagster UI     | 3000         | **4401**  | `http://localhost:4401`        |
-| MLflow UI      | 5000         | **4402**  | `http://localhost:4402`        |
-| Redpanda Admin | 8081         | **4403**  | `http://localhost:4403`        |
-| Redpanda Proxy | 8082         | **4404**  | `http://localhost:4404`        |
-| Redpanda Kafka | 9092         | **4405**  | `localhost:4405`               |
-| Redpanda Int.  | 29092        | **4406**  | internal only                  |
-| Grafana        | 3000         | **4407**  | `http://localhost:4407`        |
-| FastAPI        | 8000         | **4408**  | `http://localhost:4408`        |
-| Next.js WebApp | 3000         | **4409**  | `http://localhost:4409`        |
+| Dagster UI     | 3000         | **4301**  | `http://localhost:4301`        |
+| MLflow UI      | 5000         | **4302**  | `http://localhost:4302`        |
+| Redpanda Admin | 8081         | **4303**  | `http://localhost:4303`        |
+| Redpanda Proxy | 8082         | **4304**  | `http://localhost:4304`        |
+| Redpanda Kafka | 9092         | **4305**  | `localhost:4305`               |
+| Redpanda Int.  | 29092        | **4306**  | internal only                  |
+| Grafana        | 3000         | **4307**  | `http://localhost:4307`        |
+| FastAPI        | 8000         | **4308**  | `http://localhost:4308`        |
+| Next.js WebApp | 3000         | **4309**  | `http://localhost:4309`        |
 | PostgreSQL     | 5432         | —         | internal only (no host port)   |
 
 ---
@@ -167,12 +167,12 @@ Expected output:
 
 ```
 NAME                   STATUS   PORTS
-dagster_orchestrator   Up       0.0.0.0:4401->3000/tcp
-mlflow_server          Up       0.0.0.0:4402->5000/tcp
-redpanda               Up       0.0.0.0:4403-4406->...
-soc_grafana            Up       0.0.0.0:4407->3000/tcp
-mlsecops_api           Up       0.0.0.0:4408->8000/tcp
-mlsecops_webapp        Up       0.0.0.0:4409->3000/tcp
+dagster_orchestrator   Up       0.0.0.0:4301->3000/tcp
+mlflow_server          Up       0.0.0.0:4302->5000/tcp
+redpanda               Up       0.0.0.0:4303-4306->...
+soc_grafana            Up       0.0.0.0:4307->3000/tcp
+mlsecops_api           Up       0.0.0.0:4308->8000/tcp
+mlsecops_webapp        Up       0.0.0.0:4309->3000/tcp
 soc_postgres           Up       (internal only)
 dagster_daemon         Up
 ```
@@ -181,16 +181,16 @@ dagster_daemon         Up
 
 | App      | URL                              |
 |----------|----------------------------------|
-| Dagster  | http://localhost:4401            |
-| MLflow   | http://localhost:4402            |
-| Grafana  | http://localhost:4407 *(admin/admin)* |
-| API Docs | http://localhost:4408/docs       |
-| WebApp   | http://localhost:4409            |
+| Dagster  | http://localhost:4301            |
+| MLflow   | http://localhost:4302            |
+| Grafana  | http://localhost:4307 *(admin/admin)* |
+| API Docs | http://localhost:4308/docs       |
+| WebApp   | http://localhost:4309            |
 
 ### 7. Run the pipeline
 
 **Option A – Via Dagster UI (recommended):**
-1. Go to http://localhost:4401
+1. Go to http://localhost:4301
 2. Click **Jobs** → `full_mlsecops_pipeline_job` → **Launchpad** → **Launch Run**
 
 **Option B – Via terminal:**
@@ -214,7 +214,7 @@ docker compose exec dagster dagster job execute \
 After the training job completes, trigger the API to load the new model without restarting:
 
 ```bash
-curl -X POST http://localhost:4408/api/v1/reload-model
+curl -X POST http://localhost:4308/api/v1/reload-model
 ```
 
 ---
@@ -300,7 +300,7 @@ netstat -tuln | grep 440
 
 ## Accessing the UIs From Any Network (Firewall Bypass)
 
-The university firewall blocks inbound connections on ports `44XX`.
+The university firewall blocks inbound connections on ports `43XX`.
 Use one of these two methods to access the platform from outside the campus network.
 
 ---
@@ -348,15 +348,15 @@ On your **local Windows machine**, open PowerShell:
 
 # Or manually:
 ssh -N `
-  -L 4401:localhost:4401 `
-  -L 4402:localhost:4402 `
-  -L 4407:localhost:4407 `
-  -L 4408:localhost:4408 `
-  -L 4409:localhost:4409 `
+  -L 4301:localhost:4301 `
+  -L 4302:localhost:4302 `
+  -L 4307:localhost:4307 `
+  -L 4308:localhost:4308 `
+  -L 4309:localhost:4309 `
   your_username@41.250.197.226
 ```
 
-Keep that terminal open. Then open `http://localhost:44XX` in your browser.
+Keep that terminal open. Then open `http://localhost:43XX` in your browser.
 
 ---
 
@@ -406,15 +406,15 @@ Copy `.env.example` to `.env` and adjust as needed.
 
 | Variable                 | Default              | Description                                  |
 |--------------------------|----------------------|----------------------------------------------|
-| `DAGSTER_HOST_PORT`      | `4401`               | Host port for Dagster UI                     |
-| `MLFLOW_HOST_PORT`       | `4402`               | Host port for MLflow UI                      |
-| `REDPANDA_ADMIN_PORT`    | `4403`               | Host port for Redpanda Admin API             |
-| `REDPANDA_PROXY_PORT`    | `4404`               | Host port for Redpanda HTTP Proxy            |
-| `REDPANDA_KAFKA_PORT`    | `4405`               | Host port for Kafka external listener        |
-| `REDPANDA_INTERNAL_PORT` | `4406`               | Host port for Kafka internal listener        |
-| `GRAFANA_HOST_PORT`      | `4407`               | Host port for Grafana                        |
-| `API_HOST_PORT`          | `4408`               | Host port for FastAPI                        |
-| `WEBAPP_HOST_PORT`       | `4409`               | Host port for Next.js WebApp                 |
+| `DAGSTER_HOST_PORT`      | `4301`               | Host port for Dagster UI                     |
+| `MLFLOW_HOST_PORT`       | `4302`               | Host port for MLflow UI                      |
+| `REDPANDA_ADMIN_PORT`    | `4303`               | Host port for Redpanda Admin API             |
+| `REDPANDA_PROXY_PORT`    | `4304`               | Host port for Redpanda HTTP Proxy            |
+| `REDPANDA_KAFKA_PORT`    | `4305`               | Host port for Kafka external listener        |
+| `REDPANDA_INTERNAL_PORT` | `4306`               | Host port for Kafka internal listener        |
+| `GRAFANA_HOST_PORT`      | `4307`               | Host port for Grafana                        |
+| `API_HOST_PORT`          | `4308`               | Host port for FastAPI                        |
+| `WEBAPP_HOST_PORT`       | `4309`               | Host port for Next.js WebApp                 |
 | `STREAM_MAX_RECORDS`     | `500000`             | Max records per pipeline run                 |
 | `PRODUCER_BATCH_SIZE`    | `5000`               | Kafka producer batch size                    |
 | `MLFLOW_TRACKING_URI`    | `http://mlflow:5000` | MLflow server URI (internal Docker network)  |
@@ -432,7 +432,7 @@ Copy `.env.example` to `.env` and adjust as needed.
 |---------|-------|-----|
 | `curl: Failed to connect to localhost` | You're inside a container — `localhost` is the container itself | Use the container name: `curl http://mlsecops_api:8000/health` |
 | `KeyError: 'metrics'` in Dagster | `cleaned_logs.jsonl` is empty — no data was ingested | Re-run the full pipeline starting from ingestion |
-| `ERR_CONNECTION_TIMED_OUT` on `44XX` ports | University firewall blocks inbound ports | Run `bash expose_endpoints.sh` for Cloudflare tunnels |
+| `ERR_CONNECTION_TIMED_OUT` on `43XX` ports | University firewall blocks inbound ports | Run `bash expose_endpoints.sh` for Cloudflare tunnels |
 | Port shows `Missing external address` in Komodo | No external IP set in Komodo server settings | Normal — Docker binding `0.0.0.0` is correct |
 | MLflow `404 Not Found` on model versions | No model has been registered yet | Run the training pipeline first |
 | Dagster daemon `No heartbeat received` warning | Ephemeral code-server process shutdown | Normal — not a crash, the daemon is healthy |
@@ -454,3 +454,4 @@ Copy `.env.example` to `.env` and adjust as needed.
 ## License
 
 [MIT](LICENSE)
+
