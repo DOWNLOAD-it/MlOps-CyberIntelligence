@@ -1,0 +1,61 @@
+# =============================================================
+# MLSecOps Platform — Caddy Reverse Proxy Configuration
+# =============================================================
+# Caddy automatically obtains and renews SSL certificates from
+# Let's Encrypt for every block below. No manual cert setup needed.
+#
+# Prerequisites (on Cloudflare DNS):
+#   - exp.s3.fsbm.ma     → A record → 41.250.197.226  (DNS-only, grey cloud)
+#   - *.exp.s3.fsbm.ma   → A record → 41.250.197.226  (DNS-only, grey cloud)
+#   - Ports 80 and 443 must be open on the server firewall
+# =============================================================
+
+# Dagster Orchestration UI
+dagster.exp.s3.fsbm.ma {
+    reverse_proxy dagster_orchestrator:3000
+    encode gzip
+    log {
+        output file /var/log/caddy/dagster.log
+    }
+}
+
+# MLflow Experiment Tracking UI
+mlflow.exp.s3.fsbm.ma {
+    reverse_proxy mlflow_server:5000
+    encode gzip
+    log {
+        output file /var/log/caddy/mlflow.log
+    }
+}
+
+# Grafana SOC Dashboard
+grafana.exp.s3.fsbm.ma {
+    reverse_proxy soc_grafana:3000
+    encode gzip
+    log {
+        output file /var/log/caddy/grafana.log
+    }
+}
+
+# FastAPI Inference Backend
+api.exp.s3.fsbm.ma {
+    reverse_proxy mlsecops_api:8000
+    encode gzip
+    log {
+        output file /var/log/caddy/api.log
+    }
+}
+
+# Next.js WebApp Frontend
+app.exp.s3.fsbm.ma {
+    reverse_proxy mlsecops_webapp:3000
+    encode gzip
+    log {
+        output file /var/log/caddy/webapp.log
+    }
+}
+
+# Root domain — redirect to webapp
+exp.s3.fsbm.ma {
+    redir https://app.exp.s3.fsbm.ma{uri} permanent
+}

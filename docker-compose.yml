@@ -120,8 +120,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-soc_alerts}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
 
   grafana:
     image: grafana/grafana:10.1.5
@@ -165,9 +163,28 @@ services:
     ports:
       - "${WEBAPP_HOST_PORT:-4309}:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:${API_HOST_PORT:-4308}
+      - NEXT_PUBLIC_API_URL=https://api.exp.s3.fsbm.ma
     depends_on:
       - ml_api
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"       # HTTP (redirects to HTTPS + Let's Encrypt ACME challenge)
+      - "443:443"     # HTTPS
+      - "443:443/udp" # HTTP/3 (QUIC)
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data          # Stores SSL certificates (persisted)
+      - caddy_config:/config      # Caddy internal config cache
+    depends_on:
+      - dagster
+      - mlflow
+      - grafana
+      - ml_api
+      - ml_webapp
 
 volumes:
   redpanda_data:
@@ -175,3 +192,5 @@ volumes:
   mlflow_data:
   postgres_data:
   grafana_data:
+  caddy_data:    # Persists SSL certificates across container restarts
+  caddy_config:  # Caddy internal configuration cache
