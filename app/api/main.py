@@ -268,7 +268,7 @@ def system_health():
     # MLflow
     try:
         start_time = time.time()
-        resp = requests.get("http://mlflow:5000/health", timeout=2)
+        resp = requests.get("http://mlflow:5000/ping", timeout=2)
         latency = int((time.time() - start_time) * 1000)
         services.append({"name": "mlflow", "status": "healthy" if resp.status_code == 200 else "degraded", "latency_ms": latency, "detail": f"Status {resp.status_code}"})
     except Exception as e:
@@ -300,7 +300,7 @@ def system_health():
         services.append({"name": "redpanda", "status": "unhealthy", "latency_ms": 0, "detail": str(e)})
 
     # Dagster
-    dagster_url = os.environ.get("DAGSTER_URL", "http://dagster_orchestrator:3000/health")
+    dagster_url = os.environ.get("DAGSTER_URL", "http://dagster_orchestrator:3000/server_info")
     try:
         start_time = time.time()
         resp = requests.get(dagster_url, timeout=2)
@@ -335,10 +335,10 @@ def model_info():
         return {
             "model_name": run.get("params.best_model", "network-anomaly-detector"),
             "model_version": run.get("run_id", "unknown"),
-            "f1_score": float(run.get("metrics.f1_score", 0.0)) if "metrics.f1_score" in run else 0.0,
-            "precision": float(run.get("metrics.precision", 0.0)) if "metrics.precision" in run else 0.0,
-            "recall": float(run.get("metrics.recall", 0.0)) if "metrics.recall" in run else 0.0,
-            "accuracy": float(run.get("metrics.accuracy", 0.0)) if "metrics.accuracy" in run else 0.0,
+            "f1_score": float(run.get("metrics.test_f1", 0.0)) if "metrics.test_f1" in run else 0.0,
+            "precision": float(run.get("metrics.test_precision", 0.0)) if "metrics.test_precision" in run else 0.0,
+            "recall": float(run.get("metrics.test_recall", 0.0)) if "metrics.test_recall" in run else 0.0,
+            "accuracy": float(run.get("metrics.test_accuracy", 0.0)) if "metrics.test_accuracy" in run else 0.0,
             "training_date": str(run.get("start_time", "")),
             "feature_count": 78,
             "status": "trained"
