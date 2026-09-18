@@ -2,7 +2,15 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4308';
+// Auto-detect the API host from the browser's current hostname so the dashboard
+// works identically on localhost AND when accessed via a remote server URL.
+// NEXT_PUBLIC_API_URL overrides everything (useful for custom setups).
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT || '4308';
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== 'undefined'
+    ? `${window.location.protocol}//${window.location.hostname}:${API_PORT}`
+    : `http://localhost:${API_PORT}`);
 const POLL_INTERVAL_MS = 2500;
 const MAX_LIVE_ALERTS = 200;
 
