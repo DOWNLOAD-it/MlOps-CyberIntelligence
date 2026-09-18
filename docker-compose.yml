@@ -109,10 +109,10 @@ services:
       - mlflow_data:/app/mlruns
     environment:
       - PYTHONPATH=/app
-      # Disable MLflow 3.x cross-origin security check so the UI works
-      # when accessed via http://exp.s3.fsbm.ma:4302 (external host)
-      - MLFLOW_DISABLE_ORIGIN_CHECK=true
-    command: ["bash", "-c", "mlflow db upgrade sqlite:////app/mlflow.db && mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:////app/mlflow.db --default-artifact-root /app/mlruns --allowed-hosts '*'"]
+      # Allow cross-origin requests from any host so the UI works
+      # when accessed via http://exp.s3.fsbm.ma:4302 (external domain)
+      - MLFLOW_SERVER_CORS_ALLOWED_ORIGINS=*
+    command: ["bash", "-c", "mlflow db upgrade sqlite:////app/mlflow.db && mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:////app/mlflow.db --default-artifact-root /app/mlruns --allowed-hosts '*' --cors-allowed-origins '*'"]
 
   postgres:
     image: postgres:15-alpine
@@ -155,8 +155,16 @@ services:
     environment:
       - PYTHONPATH=/app
       - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - POSTGRES_HOST=soc_postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-mlsecops}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-supersecret}
+      - POSTGRES_DB=${POSTGRES_DB:-soc_alerts}
+      - DAGSTER_URL=http://dagster_orchestrator:3000
+      - REDPANDA_URL=http://redpanda:8081
     depends_on:
       - mlflow
+      - postgres
 
   ml_webapp:
     build:

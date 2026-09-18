@@ -28,13 +28,14 @@ Combines real-time streaming, automated ML training, and live SOC dashboards —
            ▼                              ▼
 ┌─────────────────────┐      ┌─────────────────────────────────────┐
 │  MLflow Model       │      │  Alert System                       │
-│  Registry           │      │  Topic: app-errors → PostgreSQL     │
-│  (best model saved) │      │  Grafana SOC Dashboard              │
+│  Registry           │      │  Topic: alerts → PostgreSQL         │
+│  (best model saved) │      │  SOC Dashboard (Next.js)            │
 └─────────────────────┘      └─────────────────────────────────────┘
            │
            ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  FastAPI  ←→  Next.js WebApp  (live prediction endpoint)        │
+│  FastAPI Backend ←→ 5-Tab Next.js SOC Dashboard WebApp          │
+│  (Overview, Live Alerts, Threat Inspector, ML Health, System)   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -435,6 +436,7 @@ Copy `.env.example` to `.env` and adjust as needed.
 | `ERR_CONNECTION_TIMED_OUT` on `43XX` ports | University firewall blocks inbound ports | Run `bash expose_endpoints.sh` for Cloudflare tunnels |
 | Port shows `Missing external address` in Komodo | No external IP set in Komodo server settings | Normal — Docker binding `0.0.0.0` is correct |
 | MLflow `404 Not Found` on model versions | No model has been registered yet | Run the training pipeline first |
+| MLflow UI `403 Forbidden` / `Failed to load experiment` | MLflow 3.x security middleware blocked the external domain | Added `MLFLOW_SERVER_CORS_ALLOWED_ORIGINS=*` in docker-compose.yml |
 | Dagster daemon `No heartbeat received` warning | Ephemeral code-server process shutdown | Normal — not a crash, the daemon is healthy |
 | `bash expose_endpoints.sh` shows empty URLs | Cloudflared needs more time | Increase `sleep 10` to `sleep 20` in the script |
 
