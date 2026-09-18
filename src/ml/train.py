@@ -88,7 +88,10 @@ def load_training_data(data_path: str = None) -> list:
         with open(data_path, "r", encoding="utf-8") as f:
             for line in f:
                 if line.strip():
-                    records.append(json.loads(line))
+                    try:
+                        records.append(json.loads(line))
+                    except json.JSONDecodeError as exc:
+                        logger.warning(f"Failed to parse JSON in {data_path}: {exc}. Line: {line}")
         logger.info(f"Loaded {len(records)} records from {data_path}")
     except Exception as e:
         logger.error(f"Error loading training data: {e}")

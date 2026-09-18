@@ -105,7 +105,10 @@ def streaming_cleaning_asset(context: AssetExecutionContext):
             for line in f:
                 line = line.strip()
                 if line:
-                    records.append(json.loads(line))
+                    try:
+                        records.append(json.loads(line))
+                    except json.JSONDecodeError as exc:
+                        context.log.warning(f"Failed to parse JSON: {exc}. Line: {line}")
         if records:
             try:
                 report = validate_cleaned_records(records)
@@ -196,7 +199,10 @@ def model_inference_asset(context: AssetExecutionContext):
             for line in f:
                 line = line.strip()
                 if line:
-                    records.append(json.loads(line))
+                    try:
+                        records.append(json.loads(line))
+                    except json.JSONDecodeError as exc:
+                        context.log.warning(f"Failed to parse JSON: {exc}. Line: {line}")
         if records:
             try:
                 report = validate_inference_output(records, total_processed=target or 0)
