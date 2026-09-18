@@ -112,7 +112,7 @@ services:
       # Disable MLflow 3.x cross-origin security check so the UI works
       # when accessed via http://exp.s3.fsbm.ma:4302 (external host)
       - MLFLOW_DISABLE_ORIGIN_CHECK=true
-    command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000", "--backend-store-uri", "sqlite:////app/mlflow.db", "--default-artifact-root", "/app/mlruns", "--allowed-hosts", "*"]
+    command: ["bash", "-c", "mlflow db upgrade sqlite:////app/mlflow.db && mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:////app/mlflow.db --default-artifact-root /app/mlruns --allowed-hosts '*'"]
 
   postgres:
     image: postgres:15-alpine
