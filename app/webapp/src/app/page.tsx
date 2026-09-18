@@ -550,7 +550,7 @@ function ModelHealthTab() {
 
   if (loading) return <div className="text-slate-400">Loading model info...</div>;
 
-  if (!info || !info.metrics) {
+  if (!info || info.status === 'not_trained') {
     return (
       <div className="soc-card p-10 text-center max-w-2xl mx-auto">
         <CpuIcon />
@@ -564,10 +564,10 @@ function ModelHealthTab() {
   }
 
   const metrics = [
-    { label: 'F1 Score', value: info.metrics.f1_score, color: 'text-cyan-400' },
-    { label: 'Precision', value: info.metrics.precision, color: 'text-green-400' },
-    { label: 'Recall', value: info.metrics.recall, color: 'text-amber-400' },
-    { label: 'Accuracy', value: info.metrics.accuracy, color: 'text-blue-400' },
+    { label: 'F1 Score', value: info.f1_score, color: 'text-cyan-400' },
+    { label: 'Precision', value: info.precision, color: 'text-green-400' },
+    { label: 'Recall', value: info.recall, color: 'text-amber-400' },
+    { label: 'Accuracy', value: info.accuracy, color: 'text-blue-400' },
   ];
 
   return (
@@ -575,12 +575,12 @@ function ModelHealthTab() {
       <div className="soc-card p-6 flex justify-between items-center">
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-3">
-            {info.name}
+            {info.model_name}
             <span className="badge badge-low text-xs">{info.status}</span>
           </h2>
           <div className="text-sm text-slate-400 mt-2 flex gap-6">
-            <span>Version: <strong className="text-slate-200">{info.version}</strong></span>
-            <span>Trained: <strong className="text-slate-200">{new Date(info.training_date).toLocaleString()}</strong></span>
+            <span>Version: <strong className="text-slate-200">{info.model_version}</strong></span>
+            <span>Trained: <strong className="text-slate-200">{info.training_date ? new Date(info.training_date).toLocaleString() : 'Unknown'}</strong></span>
           </div>
         </div>
         <button
@@ -611,7 +611,7 @@ function ModelHealthTab() {
 
 // --- Tab 5: System Status ---
 function SystemStatusTab() {
-  const [health, setHealth] = useState<SystemHealth | null>(null);
+  const [health, setHealth] = useState<SystemHealthResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchHealth = useCallback(async () => {
