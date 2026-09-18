@@ -64,17 +64,44 @@ def init_db():
         finally:
             conn.close()
 
+current_model_version = None
+
 def get_or_load_model():
-    global model, scaler
+    global model, scaler, current_model_version
+    
+    # Check MLflow for new version
+    try:
+        from mlflow.tracking import MlflowClient
+        client = MlflowClient(tracking_uri=os.environ.get('MLFLOW_TRACKING_URI', 'http://mlflow:5000'))
+        
+        versions = client.get_latest_versions("network-anomaly-detector", stages=["Production"])
+        if not versions:
+            versions = client.get_latest_versions("network-anomaly-detector")
+            
+        if versions:
+            latest_version = versions[0].version
+            if current_model_version != latest_version:
+                logger.info(f"New model version {latest_version} detected in MLflow. Loading...")
+                from src.ml.predict import load_model
+                loaded_model, loaded_scaler = load_model()
+                if loaded_model is not None:
+                    model, scaler = loaded_model, loaded_scaler
+                    current_model_version = latest_version
+                    logger.info(f"ML model version {latest_version} dynamically loaded successfully.")
+    except Exception as e:
+        logger.error(f"Error checking MLflow model version: {e}")
+
+    # Fallback if never loaded
     if model is None:
         try:
             from src.ml.predict import load_model
             loaded_model, loaded_scaler = load_model()
             if loaded_model is not None:
                 model, scaler = loaded_model, loaded_scaler
-                logger.info("ML model dynamically loaded successfully.")
+                logger.info("ML model dynamically loaded successfully as fallback.")
         except Exception as e:
-            logger.error(f"Error during dynamic model loading: {e}")
+            logger.error(f"Error during dynamic model loading fallback: {e}")
+            
     return model, scaler
 
 @app.on_event("startup")

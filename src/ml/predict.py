@@ -42,49 +42,42 @@ def load_model(model_path: Optional[str] = None, scaler_path: Optional[str] = No
         model_uri = "models:/network-anomaly-detector/Production"
         try:
             model = mlflow.sklearn.load_model(model_uri)
-            logger.info(f"Loaded model from MLflow: {model_uri}")
+            logger.info(f"Loaded model directly from MLflow Registry: {model_uri}")
         except Exception:
             # Fall back to latest version if Production not found
             model_uri = "models:/network-anomaly-detector/latest"
             try:
                 model = mlflow.sklearn.load_model(model_uri)
-                logger.info(f"Loaded model from MLflow: {model_uri}")
+                logger.info(f"Loaded model directly from MLflow Registry: {model_uri}")
             except Exception as e:
-                logger.debug(f"Could not load model from MLflow registry: {e}")
+                logger.error(f"Could not load model from MLflow registry: {e}")
                 
-        # Note: loading scaler from mlflow registry is more complex as it's an artifact,
-        # usually it's easier to fall back to local for the scaler, or download artifact.
+        # To fetch the scaler, we need to download it from the run's artifacts
+        if model is not None:
+            try:
+                from mlflow.tracking import MlflowClient
+                client = MlflowClient()
+                versions = client.get_latest_versions("network-anomaly-detector", stages=["Production"])
+                if not versions:
+                    versions = client.get_latest_versions("network-anomaly-detector")
+                
+                if versions:
+                    run_id = versions[0].run_id
+                    # Download scaler artifact
+                    local_scaler_path = client.download_artifacts(run_id, "scaler/scaler.joblib")
+                    if os.path.exists(local_scaler_path):
+                        scaler = joblib.load(local_scaler_path)
+                        logger.info(f"Loaded scaler directly from MLflow artifacts for run {run_id}")
+            except Exception as e:
+                logger.error(f"Failed to fetch scaler from MLflow: {e}")
+                
     except ImportError:
-        logger.debug("MLflow not available.")
+        logger.error("MLflow not available.")
     except Exception as e:
-        logger.debug(f"Error accessing MLflow: {e}")
-        
-    # Fallback to local files
+        logger.error(f"Error accessing MLflow: {e}")
+
     if model is None:
-        if model_path is None:
-            model_path = os.path.join(get_project_root(), "src", "ml", "artifacts", "model.joblib")
-            
-        if os.path.exists(model_path):
-            try:
-                model = joblib.load(model_path)
-                logger.info(f"Loaded local model from {model_path}")
-            except Exception as e:
-                logger.error(f"Error loading local model: {e}")
-        else:
-            logger.error(f"Local model not found: {model_path}")
-            
-    if scaler is None:
-        if scaler_path is None:
-            scaler_path = os.path.join(get_project_root(), "src", "ml", "artifacts", "scaler.joblib")
-            
-        if os.path.exists(scaler_path):
-            try:
-                scaler = joblib.load(scaler_path)
-                logger.info(f"Loaded local scaler from {scaler_path}")
-            except Exception as e:
-                logger.error(f"Error loading local scaler: {e}")
-        else:
-            logger.error(f"Local scaler not found: {scaler_path}")
+        logger.warning("No model found in MLflow. Returning None.")
             
     return model, scaler
 
