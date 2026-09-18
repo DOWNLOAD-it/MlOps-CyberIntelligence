@@ -160,8 +160,8 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-mlsecops}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-supersecret}
       - POSTGRES_DB=${POSTGRES_DB:-soc_alerts}
-      - DAGSTER_URL=http://dagster_orchestrator:3000
-      - REDPANDA_URL=http://redpanda:8081
+      - DAGSTER_HOST=http://dagster_orchestrator:3000
+      - REDPANDA_ADMIN_URL=http://redpanda:8081
     depends_on:
       - mlflow
       - postgres

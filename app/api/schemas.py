@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List, Dict, Any
+
 
 class NetworkRecord(BaseModel):
     destination_port: Optional[float] = 0.0
@@ -81,7 +82,33 @@ class NetworkRecord(BaseModel):
     idle_max: Optional[float] = 0.0
     idle_min: Optional[float] = 0.0
 
+
 class PredictionResponse(BaseModel):
     is_attack: bool
     confidence: float
     attack_type: str
+
+
+class RealtimeAlert(BaseModel):
+    id: int
+    timestamp: str
+    attack_type: Optional[str] = None
+    destination_port: Optional[int] = None
+    flow_duration: Optional[int] = None
+    confidence: Optional[float] = None
+
+
+class RealtimeLatestResponse(BaseModel):
+    alerts: List[RealtimeAlert]
+    last_id: int
+
+
+class RealtimeStats(BaseModel):
+    rate_per_minute: float
+    total_last_hour: int
+    attacks_last_hour: int
+    benign_last_hour: int
+    top_attack_type: str
+    avg_confidence_last_hour: float
+    by_type_last_hour: Dict[str, int]
+    by_minute: List[Dict[str, Any]]
